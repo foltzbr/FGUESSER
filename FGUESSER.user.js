@@ -138,6 +138,32 @@ pinEl.style.left = (p.x - 9) + "px"; pinEl.style.top = (p.y - 17) + "px";
 }
 (function loop() { if (S.pinLat) drawPin(); requestAnimationFrame(loop); })();
 function markPin() { if (!S.lat) return; S.pinLat = S.lat; S.pinLng = S.lng; drawPin(); document.getElementById("fg-msg").textContent = t("pinned"); }
+function numPair(a, b) {
+let la = parseFloat(a), ln = parseFloat(b);
+if (!isFinite(la) || !isFinite(ln)) return null;
+if (la < -90 || la > 90 || ln < -180 || ln > 180) return null;
+return [la, ln];
+}
+function fromParams(sp) {
+let v = sp.get("cbll") || sp.get("location") || sp.get("viewpoint");
+if (v) { let s = String(v).split(","); let p = numPair(s[0], s[1]); if (p) return p; }
+let q = sp.get("q");
+if (q && /^-?\d+\.\d+\s*,\s*-?\d+\.\d+$/.test(q.trim())) { let s = q.trim().split(","); return numPair(s[0], s[1]); }
+return null;
+}
+function scanEmbeds() {
+let frames = document.getElementsByTagName("iframe");
+for (let i = 0; i < frames.length; i++) {
+let src = frames[i].getAttribute("src") || frames[i].src || "";
+if (src.indexOf("google") < 0 && src.indexOf("maps") < 0) continue;
+if (src.indexOf("embed/v1/streetview") < 0 && src.indexOf("layer=c") < 0 && src.indexOf("map_action=pano") < 0 && src.indexOf("cbll") < 0) continue;
+try {
+let u = new URL(src, location.origin);
+let p = fromParams(u.searchParams);
+if (p && (p[0] !== S.lat || p[1] !== S.lng)) { found(p[0], p[1]); return; }
+} catch (e) {}
+}
+}
 let oOpen = XMLHttpRequest.prototype.open;
 XMLHttpRequest.prototype.open = function (m, u) { this._u = u; return oOpen.apply(this, arguments); };
 let oSend = XMLHttpRequest.prototype.send;
@@ -153,7 +179,8 @@ if (mt) { let sp = mt[0].split(","); found(parseFloat(sp[0]), parseFloat(sp[1]))
 });
 return oSend.apply(this, arguments);
 };
-setInterval(mk, 2000); mk();
+setInterval(() => { mk(); scanEmbeds(); }, 2000); mk(); scanEmbeds();
+try { new MutationObserver(() => scanEmbeds()).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ["src"] }); } catch (e) {}
 document.addEventListener("keydown", e => {
 if (e.key === "1") { let d = document.getElementById("fguesser"); if (d) d.style.display = d.style.display === "none" ? "block" : "none"; }
 if (e.key === "6") markPin();
