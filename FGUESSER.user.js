@@ -84,55 +84,56 @@ document.getElementById("fg-pais").textContent = `${flag(p.cc)} ${p.pais}`;
 document.getElementById("fg-reg").textContent = p.regiao;
 document.getElementById("fg-cid").textContent = p.cidade;
 }
-let pinEl = null;
-function mapCanvas() { return document.querySelector('[class^="guess-map_canvas__"]') || document.querySelector('div[class*="guess-map"] canvas') || document.querySelector('.leaflet-container') || document.querySelector('#map canvas') || document.querySelector('canvas'); }
-function hasProj(o) { return o && (o.getProjection || o.latLngToContainerPoint); }
-function pickMap(o) {
-if (!o || typeof o !== 'object') return null;
-if (o.getProjection || o.latLngToContainerPoint) return o;
-if (hasProj(o.map)) return o.map;
-if (hasProj(o.leafletMap)) return o.leafletMap;
-if (hasProj(o._map)) return o._map;
+function tilePos(lat, lng) {
+let imgs = document.querySelectorAll(".leaflet-tile-pane img");
+for (let i = 0; i < imgs.length; i++) {
+let src = imgs[i].currentSrc || imgs[i].src || "";
+let tx = null, ty = null, tz = null;
+try {
+let u = new URL(src, location.origin);
+tx = u.searchParams.get("x"); ty = u.searchParams.get("y"); tz = u.searchParams.get("z");
+if (tx === null || ty === null || tz === null) {
+let q = src.match(/[?&]x=(\d+)[^]*?[?&]y=(\d+)[^]*?[?&]z=(\d+)/);
+if (q) { tx = q[1]; ty = q[2]; tz = q[3]; }
+}
+if (tx === null || ty === null || tz === null) {
+let m = u.pathname.match(/\/(\d+)\/(\d+)\/(\d+)\.[a-z]+$/i);
+if (m) { tz = m[1]; tx = m[2]; ty = m[3]; }
+}
+} catch (e) { continue; }
+if (tx === null || ty === null || tz === null) continue;
+tx = +tx; ty = +ty; tz = +tz;
+if (!isFinite(tx) || !isFinite(ty) || !isFinite(tz) || tz < 0 || tz > 22) continue;
+let r = imgs[i].getBoundingClientRect();
+if (!r.width || !r.height) continue;
+let n = Math.pow(2, tz);
+let lr = lat * Math.PI / 180;
+let wx = (lng + 180) / 360 * n * 256;
+let wy = (1 - Math.log(Math.tan(lr) + 1 / Math.cos(lr)) / Math.PI) / 2 * n * 256;
+let sx = r.left + (wx - tx * 256) / 256 * r.width;
+let sy = r.top + (wy - ty * 256) / 256 * r.height;
+if (!isFinite(sx) || !isFinite(sy)) continue;
+return { x: sx, y: sy };
+}
 return null;
 }
-function findMap(c) {
-try {
-let k = Object.keys(c).find(k => k.startsWith("__reactFiber$") || k.startsWith("__reactProps$"));
-let root = c[k]; let q = [root]; let seen = new Set(); let n = 0;
-while (q.length && n < 140) { n++; let cur = q.shift(); if (!cur || seen.has(cur)) continue; seen.add(cur);
-let m = pickMap(cur.memoizedProps) || pickMap(cur.stateNode) || pickMap(cur.memoizedState);
-if (m) return m;
-if (cur.return) q.push(cur.return); if (cur.child) q.push(cur.child); if (cur.sibling) q.push(cur.sibling); }
-} catch (e) {}
-return null;
-}
-function calcPos(lat, lng, c) {
-let map = findMap(c); if (!map) return null;
-try {
-if (map.latLngToContainerPoint) {
-let p = map.latLngToContainerPoint([lat, lng]);
-let ox = c.offsetLeft || 0, oy = c.offsetTop || 0;
-return { x: ox + p.x, y: oy + p.y };
-}
-let z = map.getZoom(), sc = Math.pow(2, z);
-let px = (lng + 180) / 360 * 256 * sc;
-let py = (1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * 256 * sc;
-let ct = map.getCenter(), r = c.getBoundingClientRect();
-let cx = (ct.lng() + 180) / 360 * 256 * sc;
-let cy = (1 - Math.log(Math.tan(ct.lat() * Math.PI / 180) + 1 / Math.cos(ct.lat() * Math.PI / 180)) / Math.PI) / 2 * 256 * sc;
-return { x: (px - cx) + r.width / 2, y: (py - cy) + r.height / 2 };
-} catch (e) { return null; }
-}
-function clearPin() { if (pinEl) { pinEl.remove(); pinEl = null; } S.pinLat = 0; S.pinLng = 0; }
+let pinEl = null, pinMode = "";
+function clearPin() { if (pinEl) { pinEl.remove(); pinEl = null; } S.pinLat = 0; S.pinLng = 0; pinMode = ""; }
+function pinCss(mode) { return `position:` + mode + `;width:18px;height:18px;background:#ff3b30;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);z-index:99999;pointer-events:none;box-shadow:0 2px 6px rgba(0,0,0,.5);will-change:left,top`; }
 function drawPin() {
 if (!S.pinLat) return;
-let c = mapCanvas(); if (!c) return;
-let p = calcPos(S.pinLat, S.pinLng, c); if (!p) return;
-if (!pinEl) {
+let p = null, mode = "";
+let c = mapCanvas();
+if (c) { let g = calcPos(S.pinLat, S.pinLng, c); if (g) { p = g; mode = "absolute"; } }
+if (!p) { let tp = tilePos(S.pinLat, S.pinLng); if (tp) { p = tp; mode = "fixed"; } }
+if (!p) return;
+if (!pinEl || pinMode !== mode) {
+if (pinEl) pinEl.remove();
 pinEl = document.createElement("div");
-pinEl.style.cssText = `position:absolute;width:18px;height:18px;background:#ff3b30;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);z-index:9999;pointer-events:none;box-shadow:0 2px 6px rgba(0,0,0,.5);will-change:left,top`;
-c.parentElement.style.position = "relative";
-c.parentElement.appendChild(pinEl);
+pinEl.style.cssText = pinCss(mode);
+if (mode === "fixed") { if (!document.body) return; document.body.appendChild(pinEl); }
+else { c.parentElement.style.position = "relative"; c.parentElement.appendChild(pinEl); }
+pinMode = mode;
 }
 pinEl.style.left = (p.x - 9) + "px"; pinEl.style.top = (p.y - 17) + "px";
 }
