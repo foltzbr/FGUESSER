@@ -1,8 +1,13 @@
 // ==UserScript==
 // @name         FGUESSER
 // @namespace    fz-fguesser
-// @version      1.0
+// @version      1.1.0
 // @description  FGUESSER - map cheat for GeoGuessr and OpenGuessr with real location reveal and fast map pin
+// @homepage     https://github.com/foltzbr/FGUESSER
+// @supportURL   https://github.com/foltzbr/FGUESSER/issues
+// @license      MIT
+// @downloadURL  https://raw.githubusercontent.com/foltzbr/FGUESSER/main/FGUESSER.user.js
+// @updateURL    https://raw.githubusercontent.com/foltzbr/FGUESSER/main/FGUESSER.user.js
 // @match        https://www.geoguessr.com/*
 // @match        https://openguessr.com/*
 // @match        https://www.openguessr.com/*
