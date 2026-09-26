@@ -4,7 +4,7 @@ FGUESSER is a GeoGuessr hack that reveals the real location of any round and dro
 
 ![version](https://img.shields.io/badge/version-1.0-black) ![lang](https://img.shields.io/badge/lang-EN%20%7C%20PT%20%7C%20ES-blue) ![platform](https://img.shields.io/badge/platform-Tampermonkey-orange)
 
-![FGUESSER in action](preview.png)
+![FGUESSER in action](preview-v1.png)
 
 ## What it does
 
