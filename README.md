@@ -43,3 +43,11 @@ FGUESSER is a GeoGuessr hack that reveals the real location of any round and dro
 |------|-------------|
 | `FGUESSER.user.js` | Tampermonkey userscript, install this |
 | `preview.png` | Panel preview |
+
+## Releases
+
+| Version | Description |
+|---------|-------------|
+| [v1.0](https://github.com/foltzbr/FGUESSER/releases/tag/v1.0) | Initial release — autopin with fast map pin, EN / PT / ES |
+
+Download the ready-to-install file from the [releases page](https://github.com/foltzbr/FGUESSER/releases).
