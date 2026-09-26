@@ -117,6 +117,44 @@ return { x: sx, y: sy };
 }
 return null;
 }
+function mapCanvas() { return document.querySelector('[class^="guess-map_canvas__"]') || document.querySelector('div[class*="guess-map"] canvas') || document.querySelector('.leaflet-container') || document.querySelector('#map canvas') || document.querySelector('canvas'); }
+function hasProj(o) { return o && (o.getProjection || o.latLngToContainerPoint); }
+function pickMap(o) {
+if (!o || typeof o !== 'object') return null;
+if (o.getProjection || o.latLngToContainerPoint) return o;
+if (hasProj(o.map)) return o.map;
+if (hasProj(o.leafletMap)) return o.leafletMap;
+if (hasProj(o._map)) return o._map;
+return null;
+}
+function findMap(c) {
+try {
+let k = Object.keys(c).find(k => k.startsWith("__reactFiber$") || k.startsWith("__reactProps$"));
+let root = c[k]; let q = [root]; let seen = new Set(); let n = 0;
+while (q.length && n < 140) { n++; let cur = q.shift(); if (!cur || seen.has(cur)) continue; seen.add(cur);
+let m = pickMap(cur.memoizedProps) || pickMap(cur.stateNode) || pickMap(cur.memoizedState);
+if (m) return m;
+if (cur.return) q.push(cur.return); if (cur.child) q.push(cur.child); if (cur.sibling) q.push(cur.sibling); }
+} catch (e) {}
+return null;
+}
+function calcPos(lat, lng, c) {
+let map = findMap(c); if (!map) return null;
+try {
+if (map.latLngToContainerPoint) {
+let p = map.latLngToContainerPoint([lat, lng]);
+let ox = c.offsetLeft || 0, oy = c.offsetTop || 0;
+return { x: ox + p.x, y: oy + p.y };
+}
+let z = map.getZoom(), sc = Math.pow(2, z);
+let px = (lng + 180) / 360 * 256 * sc;
+let py = (1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * 256 * sc;
+let ct = map.getCenter(), r = c.getBoundingClientRect();
+let cx = (ct.lng() + 180) / 360 * 256 * sc;
+let cy = (1 - Math.log(Math.tan(ct.lat() * Math.PI / 180) + 1 / Math.cos(ct.lat() * Math.PI / 180)) / Math.PI) / 2 * 256 * sc;
+return { x: (px - cx) + r.width / 2, y: (py - cy) + r.height / 2 };
+} catch (e) { return null; }
+}
 let pinEl = null, pinMode = "";
 function clearPin() { if (pinEl) { pinEl.remove(); pinEl = null; } S.pinLat = 0; S.pinLng = 0; pinMode = ""; }
 function pinCss(mode) { return `position:` + mode + `;width:18px;height:18px;background:#ff3b30;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);z-index:99999;pointer-events:none;box-shadow:0 2px 6px rgba(0,0,0,.5);will-change:left,top`; }
