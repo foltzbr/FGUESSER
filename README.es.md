@@ -2,7 +2,7 @@
 
 FGUESSER es un map cheat para GeoGuessr y OpenGuessr que revela la ubicación real de cada ronda y marca un pin directo en el mapa.
 
-![version](https://img.shields.io/badge/version-1.0-black) ![platform](https://img.shields.io/badge/platform-Tampermonkey-orange)
+![version](https://img.shields.io/badge/version-1.1.0-black) ![platform](https://img.shields.io/badge/platform-Tampermonkey-orange) [![greasyfork](https://img.shields.io/badge/install-GreasyFork-green)](https://greasyfork.org/pt-BR/scripts/597588-fguesser)
 
 **Idioma:** [Português](README.pt.md) • [English](README.md) • Español (este archivo)
 
