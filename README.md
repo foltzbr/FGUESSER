@@ -1,19 +1,18 @@
 # ⚡ FGUESSER
 
-Clean GeoGuessr companion panel with real location display and fast map pin.
+FGUESSER is a GeoGuessr hack that reveals the real location of any round and drops a pin straight on the in-game map.
 
-![version](https://img.shields.io/badge/version-6.0-black) ![lang](https://img.shields.io/badge/lang-EN%20%7C%20PT%20%7C%20ES-blue) ![platform](https://img.shields.io/badge/platform-Tampermonkey-orange)
+![version](https://img.shields.io/badge/version-1.0-black) ![lang](https://img.shields.io/badge/lang-EN%20%7C%20PT%20%7C%20ES-blue) ![platform](https://img.shields.io/badge/platform-Tampermonkey-orange)
 
-![FGUESSER preview](preview.png)
+![FGUESSER in action](preview.png)
 
-## Features
+## What it does
 
-- Real-time location detection via Street View metadata
-- Country / Region / City with flag
-- Embedded OpenStreetMap preview
-- Fast map pin with 60fps tracking, stays glued while panning and zooming
-- Multi-language UI: English (default), Português, Español
-- One-click Street View, Maps and Copy
+- Reveals the true coordinates of the current Street View round
+- Shows country, region and city with flag
+- Drops a red pin on the GeoGuessr guess map at the exact spot
+- Embedded map preview of the real location
+- Interface in English (default), Português and Español
 - Works in Classic, Streaks, Duels and Party
 
 ## Install
@@ -23,33 +22,24 @@ Clean GeoGuessr companion panel with real location display and fast map pin.
 3. Paste the full content of `FGUESSER.user.js`
 4. Save with `Ctrl+S` and reload GeoGuessr
 
-## Usage
+## How to use
 
-1. Join any game
-2. Wait for the green dot + location info
-3. Click `PIN ON MAP` or press `6` to place the pin on the in-game map
-4. Press `1` to hide / show the panel
-5. Switch language anytime via the EN / PT / ES selector
+1. Join any GeoGuessr game
+2. Wait for the green dot — the real location appears in the panel
+3. Click `PIN ON MAP` or press `6` and the pin lands on the exact spot
+4. Confirm your guess in game and collect the 5000
+5. Press `1` to hide / show the panel
 
 ## Shortcuts
 
 | Key | Action |
 |-----|--------|
 | `1` | Hide / show panel |
-| `6` | Place pin on map |
+| `6` | Drop pin on map |
 
 ## Files
 
 | File | Description |
 |------|-------------|
-| `FGUESSER.user.js` | Tampermonkey userscript |
+| `FGUESSER.user.js` | Tampermonkey userscript, install this |
 | `preview.png` | Panel preview |
-
-## Changelog
-
-### 6.0
-- Multi-language support (EN default, PT, ES)
-- Faster pin rendering with requestAnimationFrame
-- Improved map instance lookup, less drift on scroll and zoom
-- Renamed action button to `PIN ON MAP`
-- Removed auto mode for maximum stability across all game modes

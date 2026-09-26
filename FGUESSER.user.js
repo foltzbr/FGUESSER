@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         FGUESSER
 // @namespace    fz-fguesser
-// @version      6.0
-// @description  FGUESSER - location display with fast map pin - EN/PT/ES
+// @version      1.0
+// @description  FGUESSER - GeoGuessr hack with real location reveal and fast map pin
 // @match        https://www.geoguessr.com/*
 // @grant        none
 // @run-at       document-start
