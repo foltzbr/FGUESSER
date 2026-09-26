@@ -41,7 +41,7 @@ s.textContent = `#fguesser{position:fixed;top:64px;left:10px;z-index:999999;widt
 #fg-row{display:flex;gap:6px;margin-top:10px}#fg-row button{flex:1;background:#1b2534;color:#dbe4ee;border:1px solid #2a3a4f;border-radius:8px;padding:7px 0;font-size:11px;cursor:pointer}
 #fg-pin{width:100%;margin-top:6px;background:#e6edf3;color:#000;border:none;border-radius:8px;padding:9px;font-weight:700;font-size:12px;cursor:pointer}
 #fg-map{width:100%;height:150px;border:0;border-radius:8px;margin-top:10px;background:#000}
-#fg-msg{font-size:11px;color:#7d8aa0;margin-top:7px;min-height:14px}`;
+#fg-msg{font-size:11px;color:#7d8aa0;margin-top:7px;min-height:14px}.fg-pin-icon{background:none!important;border:none!important}`;
 document.head.appendChild(s);
 }
 function mk() {
@@ -155,18 +155,61 @@ let cy = (1 - Math.log(Math.tan(ct.lat() * Math.PI / 180) + 1 / Math.cos(ct.lat(
 return { x: (px - cx) + r.width / 2, y: (py - cy) + r.height / 2 };
 } catch (e) { return null; }
 }
+let fgLeafletMaps = [], fgMarker = null, fgMarkerFor = "";
+function captureLeaflet() {
+try {
+if (window.L && window.L.Map && window.L.Map.prototype && !window.L.Map.prototype.__fgPatched) {
+window.L.Map.prototype.__fgPatched = true;
+let origInit = window.L.Map.prototype.initialize;
+window.L.Map.prototype.initialize = function () {
+try { fgLeafletMaps.push(this); if (fgLeafletMaps.length > 20) fgLeafletMaps = fgLeafletMaps.slice(-20); } catch (e) {}
+return origInit.apply(this, arguments);
+};
+}
+} catch (e) {}
+}
+setInterval(captureLeaflet, 500); captureLeaflet();
+function leafletMap() {
+try {
+if (!window.L) return null;
+fgLeafletMaps = fgLeafletMaps.filter(m => { try { let el = m.getContainer(); return el && el.isConnected; } catch (e) { return false; } });
+let best = null, area = 0;
+for (let m of fgLeafletMaps) {
+try {
+let r = m.getContainer().getBoundingClientRect();
+if (r.width > 10 && r.height > 10 && r.width * r.height > area) { area = r.width * r.height; best = m; }
+} catch (e) {}
+}
+return best;
+} catch (e) { return null; }
+}
+function placeLeafletPin() {
+if (!S.pinLat) return false;
+let key = S.pinLat + "," + S.pinLng;
+if (fgMarker && fgMarkerFor === key) return true;
+let m = leafletMap(); if (!m) return false;
+try {
+if (fgMarker) { try { fgMarker.remove(); } catch (e) {} fgMarker = null; }
+let html = '<div style="width:18px;height:18px;background:#ff3b30;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,.5)"></div>';
+fgMarker = window.L.marker([S.pinLat, S.pinLng], { icon: window.L.divIcon({ className: "fg-pin-icon", html: html, iconSize: [18, 18], iconAnchor: [9, 17] }), interactive: false, keyboard: false }).addTo(m);
+fgMarkerFor = key;
+return true;
+} catch (e) { return false; }
+}
 let pinEl = null, pinMode = "";
-function clearPin() { if (pinEl) { pinEl.remove(); pinEl = null; } S.pinLat = 0; S.pinLng = 0; pinMode = ""; }
+function clearPin() { if (pinEl) { pinEl.remove(); pinEl = null; } if (fgMarker) { try { fgMarker.remove(); } catch (e) {} fgMarker = null; } fgMarkerFor = ""; S.pinLat = 0; S.pinLng = 0; pinMode = ""; }
 function pinCss(mode) { return `position:` + mode + `;width:18px;height:18px;background:#ff3b30;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);z-index:99999;pointer-events:none;box-shadow:0 2px 6px rgba(0,0,0,.5);will-change:left,top`; }
 function drawPin() {
 if (!S.pinLat) return;
 let p = null, mode = "";
 let c = mapCanvas();
 if (c) { let g = calcPos(S.pinLat, S.pinLng, c); if (g) { p = g; mode = "absolute"; } }
+if (!p && placeLeafletPin()) { if (pinEl) { pinEl.remove(); pinEl = null; } pinMode = "leaflet"; return; }
 if (!p) { let tp = tilePos(S.pinLat, S.pinLng); if (tp) { p = tp; mode = "fixed"; } }
 if (!p) return;
 if (!pinEl || pinMode !== mode) {
 if (pinEl) pinEl.remove();
+if (fgMarker) { try { fgMarker.remove(); } catch (e) {} fgMarker = null; fgMarkerFor = ""; }
 pinEl = document.createElement("div");
 pinEl.style.cssText = pinCss(mode);
 if (mode === "fixed") { if (!document.body) return; document.body.appendChild(pinEl); }
