@@ -2,8 +2,10 @@
 // @name         FGUESSER
 // @namespace    fz-fguesser
 // @version      1.0
-// @description  FGUESSER - GeoGuessr hack with real location reveal and fast map pin
+// @description  FGUESSER - map cheat for GeoGuessr and OpenGuessr with real location reveal and fast map pin
 // @match        https://www.geoguessr.com/*
+// @match        https://openguessr.com/*
+// @match        https://www.openguessr.com/*
 // @grant        none
 // @run-at       document-start
 // ==/UserScript==
@@ -83,14 +85,23 @@ document.getElementById("fg-reg").textContent = p.regiao;
 document.getElementById("fg-cid").textContent = p.cidade;
 }
 let pinEl = null;
-function mapCanvas() { return document.querySelector('[class^="guess-map_canvas__"]') || document.querySelector('div[class*="guess-map"] canvas'); }
+function mapCanvas() { return document.querySelector('[class^="guess-map_canvas__"]') || document.querySelector('div[class*="guess-map"] canvas') || document.querySelector('.leaflet-container') || document.querySelector('#map canvas') || document.querySelector('canvas'); }
+function hasProj(o) { return o && (o.getProjection || o.latLngToContainerPoint); }
+function pickMap(o) {
+if (!o || typeof o !== 'object') return null;
+if (o.getProjection || o.latLngToContainerPoint) return o;
+if (hasProj(o.map)) return o.map;
+if (hasProj(o.leafletMap)) return o.leafletMap;
+if (hasProj(o._map)) return o._map;
+return null;
+}
 function findMap(c) {
 try {
-let k = Object.keys(c).find(k => k.startsWith("__reactFiber$"));
+let k = Object.keys(c).find(k => k.startsWith("__reactFiber$") || k.startsWith("__reactProps$"));
 let root = c[k]; let q = [root]; let seen = new Set(); let n = 0;
-while (q.length && n < 80) { n++; let cur = q.shift(); if (!cur || seen.has(cur)) continue; seen.add(cur);
-if (cur.memoizedProps && cur.memoizedProps.map && cur.memoizedProps.map.getProjection) return cur.memoizedProps.map;
-if (cur.stateNode && cur.stateNode.getProjection) return cur.stateNode;
+while (q.length && n < 140) { n++; let cur = q.shift(); if (!cur || seen.has(cur)) continue; seen.add(cur);
+let m = pickMap(cur.memoizedProps) || pickMap(cur.stateNode) || pickMap(cur.memoizedState);
+if (m) return m;
 if (cur.return) q.push(cur.return); if (cur.child) q.push(cur.child); if (cur.sibling) q.push(cur.sibling); }
 } catch (e) {}
 return null;
@@ -98,6 +109,11 @@ return null;
 function calcPos(lat, lng, c) {
 let map = findMap(c); if (!map) return null;
 try {
+if (map.latLngToContainerPoint) {
+let p = map.latLngToContainerPoint([lat, lng]);
+let ox = c.offsetLeft || 0, oy = c.offsetTop || 0;
+return { x: ox + p.x, y: oy + p.y };
+}
 let z = map.getZoom(), sc = Math.pow(2, z);
 let px = (lng + 180) / 360 * 256 * sc;
 let py = (1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * 256 * sc;
@@ -129,7 +145,7 @@ XMLHttpRequest.prototype.send = function () {
 this.addEventListener("load", function () {
 try {
 let u = String(this._u || "");
-if (u.includes("GetMetadata") || u.includes("SingleImageSearch")) {
+if (u.includes("GetMetadata") || u.includes("SingleImageSearch") || u.includes("streetview") || u.includes("photometa") || u.includes("panorama")) {
 let mt = this.responseText.match(/-?\d+\.\d+,-?\d+\.\d+/g);
 if (mt) { let sp = mt[0].split(","); found(parseFloat(sp[0]), parseFloat(sp[1])); }
 }
