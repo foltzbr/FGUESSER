@@ -4,7 +4,7 @@ FGUESSER es un map cheat para GeoGuessr y OpenGuessr que revela la ubicación re
 
 ![version](https://img.shields.io/badge/version-1.0-black) ![platform](https://img.shields.io/badge/platform-Tampermonkey-orange)
 
-**Idioma:** [Português](README.md) • [English](README.en.md) • Español (este archivo)
+**Idioma:** [Português](README.pt.md) • [English](README.md) • Español (este archivo)
 
 ![FGUESSER en acción](preview-v1.png)
 
